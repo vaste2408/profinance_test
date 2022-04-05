@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\UrlModel;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,4 +16,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+Route::get('/short/{url}', function ($url) {
+    $restoredUrl = (new UrlModel($url))->restoreShortUrl($url);
+    if ($restoredUrl) {
+        header("Location: $restoredUrl");
+        exit;
+    }
+    return redirect('404');
 });
