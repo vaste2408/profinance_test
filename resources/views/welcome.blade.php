@@ -13,13 +13,13 @@
     </style>
 </head>
 <body class="antialiased">
-<form id="mainForm">
-    <label> Input url
-        <input name="url" type="url" id="url" />
-    </label>
-    <button id="submitMainForm">Submit</button>
-</form>
-<div id="serverAnswer"></div>
+    <form id="mainForm">
+        <label> Input url
+            <input name="url" type="url" id="url"/>
+        </label>
+        <button id="submitMainForm">Submit</button>
+    </form>
+    <div id="serverAnswer"></div>
 </body>
 <script src="{{ mix('/js/app.js') }}"></script>
 </html>

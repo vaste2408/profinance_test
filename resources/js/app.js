@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function processSubmit() {
+        printAnswer('');
         if (!validateForm())
             return false;
         processRequest();
@@ -21,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (val.trim() === ""
             || !val.match(regex)
         ) {
-            processAnswer('Type the correct url address into `url` field');
+            printAnswer('Type the correct url address into `url` field');
             return false;
         }
         return true;
@@ -31,14 +32,15 @@ document.addEventListener('DOMContentLoaded', function () {
         sendRequest()
             .then(res => res.json())
             .catch(error => {
-                processAnswer(error);
+                printAnswer(error);
             })
             .then(data => {
-                processAnswer(data);
+                printAnswer(data);
             });
     }
 
     function sendRequest() {
+        showLoader();
         //Замечение разработчкика: не знаю, с какой целью в ТЗ отправка запроса через сырой JS, когда есть axios или jquery на худой конец. Но ладно.
         return fetch('/api/shortUrl', {
             method: 'POST',
@@ -52,11 +54,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function processAnswer(result) {
+    function printAnswer(result) {
         DOM_ANSWER.innerHTML = "";
         DOM_ANSWER.innerHTML = result;
         if (typeof result === 'object') {
             DOM_ANSWER.innerHTML = result.message ?? JSON.stringify(result);
         }
+    }
+
+    function showLoader()
+    {
+        printAnswer('Loading...');
     }
 });

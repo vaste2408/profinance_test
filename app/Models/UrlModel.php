@@ -2,25 +2,42 @@
 
 namespace App\Models;
 
-use DateTime;
-use Illuminate\Support\Facades\Storage;
-
+/**
+ * Модель управления урлами. Умеет создавать сокращенные ссылки. Умеет восстанавливать сокращенные ссылки.
+ * Модель получилась немного активРекордной, но не страшно.
+ */
 class UrlModel
 {
     protected string $url;
-    protected ?string $short;
-    protected string $storageFile = 'links.ini';
+    protected ?string $shortUrl;
+    protected string $storageFile = 'links.json';
+    protected array $links;
 
     public function __construct($url)
     {
         $this->url = $url;
-        $this->short = null;
+        $this->shortUrl = null;
+        $this->links = [];
     }
 
+    /**
+     * Возвращает обновлённый список линков из базы для поиска
+     * @return array|mixed
+     */
+    public function getLinks(): mixed
+    {
+        $this->links = $this->readLinks();
+        return $this->links;
+    }
+
+    /**
+     * Восстановление сокращенной ссылки, если она имеется в хранилище
+     * @param $short
+     * @return string|null
+     */
     public function restoreShortUrl($short): string|null
     {
-        $links = parse_ini_file(Storage::path($this->storageFile));
-        foreach ($links as $url => $value) {
+        foreach ($this->getLinks()  as $url => $value) {
             if ($value === $short) {
                 return $url;
             }
@@ -28,27 +45,60 @@ class UrlModel
         return null;
     }
 
-    public function getShortCode()
+    /**
+     * Получение сокращенной ссылки
+     * @return mixed|string|null
+     */
+    public function getShortCode(): mixed
     {
-        return $this->short ?? $this->createShortCode();
+        $this->shortUrl = $this->shortUrl ?? $this->loadShortCode() ?? $this->createShortCode();
+        return $this->shortUrl;
     }
 
-    private function createShortCode()
+    /**
+     * Поиск в базе сокращенной ссылки
+     * @return mixed|null
+     */
+    protected function loadShortCode(): mixed
     {
-        $this->short = $this->loadShortCode() ?? $this->saveShortCode();
-        return $this->short;
+        return  $this->getLinks()[$this->url] ?? null;
     }
 
-    private function loadShortCode()
+    /**
+     * Создание сокращенной ссылки
+     * @return string|null
+     */
+    protected function createShortCode(): ?string
     {
-        $links = parse_ini_file(Storage::path($this->storageFile));
-        return $links[$this->url] ?? null;
+        $this->shortUrl = $this->formShortCode();
+        return $this->saveShortCode() ? $this->shortUrl : null;
     }
 
-    private function saveShortCode(): string
+    /**
+     * Формирование сокращенной ссылки.
+     * В данном случае это просто таймштамп
+     * @return string
+     */
+    protected function formShortCode(): string
     {
-        $short = (new DateTime('now'))->getTimestamp();
-        Storage::append($this->storageFile, "$this->url = $short");
-        return (string)$short;
+        return (string) (new \DateTime('now'))->getTimestamp();
+    }
+
+    /**
+     * Получение записей из базы
+     * @return mixed
+     */
+    protected function readLinks(): mixed
+    {
+        return json_decode(file_get_contents($this->storageFile), true) ?? [];
+    }
+
+    /**
+     * Запись сохранённой ссылки в базу
+     * @return bool|int
+     */
+    protected function saveShortCode(): bool|int
+    {
+        return file_put_contents($this->storageFile, json_encode(array_merge($this->links, [$this->url => $this->shortUrl])));
     }
 }
